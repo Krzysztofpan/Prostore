@@ -3,8 +3,8 @@ import { PrismaAdapter } from '@auth/prisma-adapter'
 import { prisma } from '@/db/prisma'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { compareSync } from 'bcrypt-ts-edge'
-import type { NextAuthConfig } from 'next-auth'
-import { NextResponse } from 'next/server'
+
+import { authConfig } from './auth.config'
 import { cookies } from 'next/headers'
 
 export const config = {
@@ -13,7 +13,7 @@ export const config = {
     error: '/sign-in',
   },
   session: {
-    strategy: 'jwt',
+    strategy: 'jwt' as const,
     maxAge: 30 * 24 * 60 * 60,
   },
   adapter: PrismaAdapter(prisma),
@@ -125,53 +125,9 @@ export const config = {
       return token
     },
 
-    authorized({ request, auth }: any) {
-      // Array of regex patterns of paths we want to protect
-      const protectedPaths = [
-        /\/shipping-address/,
-        /\/payment-method/,
-        /\/place-order/,
-        /\/profile/,
-        /\/user\/(.*)/,
-        /\/order\/(.*)/,
-        /\/admin/,
-      ]
-
-      // Get pathname from req URL object
-
-      const { pathName } = request.nextUrl
-
-      // Check if user is not authenticated and accessing a protected path
-
-      if (!auth && protectedPaths.some((p) => p.test(pathName))) return false
-      if (!request.cookies.get('sessionCartId')) {
-        // Check for session cart cookie
-        // Generate new session cart id cookie
-
-        const sessionCartId = crypto.randomUUID()
-
-        // Clone the req headers
-        const newRequestHeaders = new Headers(request.headers)
-
-        // Create new response and add the new headers
-
-        const response = NextResponse.next({
-          request: {
-            headers: newRequestHeaders,
-          },
-        })
-
-        // Set newly generated sessionCartId in the response cookies
-
-        response.cookies.set('sessionCartId', sessionCartId)
-
-        return response
-      } else {
-        return true
-      }
-    },
+    ...authConfig.callbacks,
   },
-} satisfies NextAuthConfig
+}
 
 export const {
   handlers: { GET, POST },
