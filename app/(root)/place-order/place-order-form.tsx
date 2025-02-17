@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { useToast } from '@/hooks/use-toast'
+
 import { createOrder } from '@/lib/actions/order.actions'
 import { Check, Loader } from 'lucide-react'
 import { useRouter } from 'next/navigation'
